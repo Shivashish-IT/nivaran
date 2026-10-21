@@ -1,0 +1,32 @@
+name: Bootstrap Nivaran source
+on:
+  push:
+    branches:
+      - stage6-app
+permissions:
+  contents: write
+jobs:
+  expand-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stage6-app
+          persist-credentials: true
+      - name: Expand uploaded source bundle when complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .bundle/READY ]; then
+            echo "Source bundle is still being uploaded."
+            exit 0
+          fi
+          cat .bundle/part* | base64 --decode > /tmp/nivaran-source.zip
+          unzip -q /tmp/nivaran-source.zip
+          cp -a nivaran/. .
+          rm -rf nivaran .bundle
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add Nivaran application source"
+          git push origin HEAD:stage6-app
