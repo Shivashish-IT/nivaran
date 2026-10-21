@@ -1,1 +1,0 @@
-Nivaran application source has not been uploaded yet. Do not deploy until the application files are present.
