@@ -2,11 +2,11 @@
 
 Nivaran is a React/Vite frontend and Express/MongoDB backend for organization-scoped issue management.
 
-## Deployment files
+## Repository status
 
-This repository is prepared for deployment on Render using `render.yaml`. The service blueprint expects the project structure to include `client/` and `server/` directories.
+The Nivaran Stage 6 project source has **not yet been uploaded to this repository**. The repository currently contains this README only, so it cannot be deployed yet. Download the Stage 6 source archive from the project conversation, extract it, and copy the *contents* of its inner `nivaran/` folder into this repository root. The root should contain `client/`, `server/`, `render.yaml`, `docker-compose.yml`, and `package.json`.
 
-## Quick start
+## Quick start (after source files are uploaded)
 
 1. Install Node.js 22+ and MongoDB, or use MongoDB Atlas.
 2. Copy `server/.env.example` to `server/.env` and configure `MONGODB_URI` and a random `SESSION_SECRET` (at least 32 characters).
@@ -26,8 +26,8 @@ Set a strong `SESSION_SECRET`, then run `docker compose up --build`. Open `http:
 
 ## Deployment
 
-See `render.yaml` and `docs/STAGE_6_DEPLOYMENT_READINESS.md`. A MongoDB Atlas connection string, deployed frontend origin, and frontend API URL must be configured in Render environment settings. Never commit secrets.
+The included `render.yaml` blueprint requires a MongoDB Atlas connection string, deployed frontend origin, and frontend API URL configured in Render environment settings. Never commit secrets.
 
 ## Verification status
 
-Static syntax/configuration checks have been performed, but live MongoDB connectivity, the production frontend build, Docker runtime, and deployed end-to-end testing are not yet verified.
+Static syntax/configuration checks have been performed on the source archive, but live MongoDB connectivity, the production frontend build, Docker runtime, and deployed end-to-end testing are not yet verified.
