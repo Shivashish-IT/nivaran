@@ -1,6 +1,7 @@
 services:
   - type: web
     name: nivaran-api
+    plan: free
     runtime: node
     rootDir: server
     buildCommand: npm install
@@ -18,6 +19,7 @@ services:
 
   - type: web
     name: nivaran-web
+    plan: free
     runtime: static
     rootDir: client
     buildCommand: npm install && npm run build
