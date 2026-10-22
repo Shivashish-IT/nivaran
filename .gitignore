@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+coverage/
+.DS_Store
+*.log
+
+# Private user-uploaded issue attachments
+server/private-uploads/
+
+!.env.example
+!**/.env.example
