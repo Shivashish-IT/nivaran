@@ -1,26 +1,49 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { env } from '../config/env.js';
 
-let transport;
-function getTransport() {
-  if (!env.smtpHost || !env.smtpUser || !env.smtpPass || !env.mailFrom) return null;
-  if (!transport) transport = nodemailer.createTransport({
-    host: env.smtpHost,
-    port: env.smtpPort,
-    secure: env.smtpSecure,
-    auth: { user: env.smtpUser, pass: env.smtpPass },
-  });
-  return transport;
+let resend;
+
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    if (env.nodeEnv === 'production') {
+      throw new Error('Resend email delivery is not configured.');
+    }
+    return null;
+  }
+
+  if (!resend) resend = new Resend(apiKey);
+  return resend;
 }
 
 export async function sendEmail({ to, subject, text, html }) {
-  const sender = getTransport();
-  if (!sender) {
-    if (env.nodeEnv === 'production') throw new Error('Email delivery is not configured.');
-    console.info(`[Nivaran email preview] To: ${to}\nSubject: ${subject}\n${text}`);
+  const client = getResend();
+
+  if (!client) {
+    console.info(
+      `[Nivaran email preview] To: ${to}\nSubject: ${subject}\n${text}`
+    );
     return { preview: true };
   }
-  return sender.sendMail({ from: env.mailFrom, to, subject, text, html });
+
+  const from =
+    process.env.RESEND_FROM || 'Nivaran <onboarding@resend.dev>';
+
+  const { data, error } = await client.emails.send({
+    from,
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  if (error) {
+    console.error('Resend email delivery failed:', error);
+    throw new Error(`Resend email delivery failed: ${error.message}`);
+  }
+
+  return data;
 }
 
 export async function sendPasswordResetEmail(email, url) {
@@ -33,7 +56,8 @@ export async function sendPasswordResetEmail(email, url) {
 }
 
 export async function sendInvitationEmail(email, organizationName, role, invitationId) {
-  const url = `${env.clientUrl.replace(/\/$/, '')}/`; 
+  const url = `${env.clientUrl.replace(/\/$/, '')}/`;
+
   return sendEmail({
     to: email,
     subject: `Invitation to join ${organizationName} on Nivaran`,
@@ -43,5 +67,13 @@ export async function sendInvitationEmail(email, organizationName, role, invitat
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+  return String(value).replace(/[&<>"']/g, character =>
+    ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[character]
+  );
 }
