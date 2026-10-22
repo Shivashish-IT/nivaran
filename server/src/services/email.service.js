@@ -1,49 +1,44 @@
-import { Resend } from 'resend';
 import { env } from '../config/env.js';
 
-let resend;
-
-function getResend() {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    if (env.nodeEnv === 'production') {
-      throw new Error('Resend email delivery is not configured.');
-    }
-    return null;
-  }
-
-  if (!resend) resend = new Resend(apiKey);
-  return resend;
-}
-
 export async function sendEmail({ to, subject, text, html }) {
-  const client = getResend();
+  const scriptUrl = process.env.GOOGLE_SCRIPT_URL;
+  const secret = process.env.GOOGLE_SCRIPT_SECRET;
 
-  if (!client) {
+  if (!scriptUrl || !secret) {
+    if (env.nodeEnv === 'production') {
+      throw new Error('Google email service is not configured.');
+    }
+
     console.info(
       `[Nivaran email preview] To: ${to}\nSubject: ${subject}\n${text}`
     );
     return { preview: true };
   }
 
-  const from =
-    process.env.RESEND_FROM || 'Nivaran <onboarding@resend.dev>';
-
-  const { data, error } = await client.emails.send({
-    from,
-    to,
-    subject,
-    text,
-    html,
+  const response = await fetch(scriptUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      secret,
+      to,
+      subject,
+      text,
+      html: html || text,
+    }),
+    redirect: 'follow',
   });
 
-  if (error) {
-    console.error('Resend email delivery failed:', error);
-    throw new Error(`Resend email delivery failed: ${error.message}`);
+  if (!response.ok) {
+    throw new Error(`Google email service returned HTTP ${response.status}.`);
   }
 
-  return data;
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || 'Google email delivery failed.');
+  }
+
+  return result;
 }
 
 export async function sendPasswordResetEmail(email, url) {
@@ -55,7 +50,12 @@ export async function sendPasswordResetEmail(email, url) {
   });
 }
 
-export async function sendInvitationEmail(email, organizationName, role, invitationId) {
+export async function sendInvitationEmail(
+  email,
+  organizationName,
+  role,
+  invitationId
+) {
   const url = `${env.clientUrl.replace(/\/$/, '')}/`;
 
   return sendEmail({
